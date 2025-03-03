@@ -1,0 +1,376 @@
+basePath: /api/v1
+definitions:
+  requests.BadRequestError:
+    properties:
+      error:
+        example: invalid json data
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  requests.BalanceResponse:
+    properties:
+      balance:
+        additionalProperties:
+          type: number
+        type: object
+    type: object
+  requests.CantCreateJWTError:
+    properties:
+      error:
+        example: could not create JWT token
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  requests.DepositRequest:
+    properties:
+      amount:
+        example: 50
+        type: number
+      currency:
+        example: USD
+        type: string
+    required:
+    - amount
+    - currency
+    type: object
+  requests.DepositResponse:
+    properties:
+      balance:
+        additionalProperties:
+          type: number
+        type: object
+      message:
+        example: Account topped up successfully
+        type: string
+    type: object
+  requests.ExchangeRequest:
+    properties:
+      amount:
+        example: 20
+        type: number
+      from_currency:
+        example: USD
+        type: string
+      to_currency:
+        example: EUR
+        type: string
+    required:
+    - amount
+    - from_currency
+    - to_currency
+    type: object
+  requests.ExchangeResponse:
+    properties:
+      exchanged_amount:
+        example: 17
+        type: number
+      message:
+        example: exchanged successfully
+        type: string
+      new_balance:
+        additionalProperties:
+          type: number
+        type: object
+    type: object
+  requests.LoginRequest:
+    properties:
+      password:
+        example: secure_password
+        type: string
+      username:
+        example: john_doe
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  requests.NotAuthorizedError:
+    properties:
+      error:
+        example: invalid token
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  requests.NotEnoughFundsError:
+    properties:
+      error:
+        example: not enough money to withdraw
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  requests.RatesResponse:
+    properties:
+      rates:
+        additionalProperties:
+          type: number
+        type: object
+    type: object
+  requests.RegisterRequest:
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+      password:
+        example: secure_password
+        type: string
+      username:
+        example: john_doe
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  requests.RetrieveRatesError:
+    properties:
+      error:
+        example: failed to retrieve exchange rates
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  requests.WithdrawRequest:
+    properties:
+      amount:
+        example: 25
+        type: number
+      currency:
+        example: USD
+        type: string
+    required:
+    - amount
+    - currency
+    type: object
+host: localhost:8088
+info:
+  contact: {}
+  description: This is a sample server for transferer service
+  title: Transferer API
+  version: "1.0"
+paths:
+  /api/v1/balance:
+    get:
+      consumes:
+      - application/json
+      description: Получает баланс пользователя на основе предоставленного токена.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/requests.BalanceResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/requests.NotAuthorizedError'
+      summary: Получение баланса пользователя
+      tags:
+      - balance
+  /api/v1/deposit:
+    post:
+      consumes:
+      - application/json
+      description: Пополняет баланс пользователя на указанную сумму в указанной валюте.
+      parameters:
+      - description: Данные для пополнения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.DepositRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/requests.DepositResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/requests.BadRequestError'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/requests.NotAuthorizedError'
+      security:
+      - ApiKeyAuth: []
+      summary: Пополнение баланса пользователя
+      tags:
+      - deposit
+  /api/v1/exchange:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет обмен валюты пользователя из одной валюты в другую.
+      parameters:
+      - description: Данные для обмена
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.ExchangeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/requests.ExchangeResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/requests.BadRequestError'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/requests.NotAuthorizedError'
+      security:
+      - ApiKeyAuth: []
+      summary: Обмен валюты пользователя
+      tags:
+      - exchange
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентифицирует пользователя и возвращает JWT токен.
+      parameters:
+      - description: Логин пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная аутентификация
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/requests.BadRequestError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/requests.CantCreateJWTError'
+      summary: Аутентификация пользователя
+      tags:
+      - auth
+  /api/v1/rates:
+    get:
+      consumes:
+      - application/json
+      description: Получает текущие курсы валют.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/requests.RatesResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/requests.NotAuthorizedError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/requests.RetrieveRatesError'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение курсов валют
+      tags:
+      - rates
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя в системе.
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная регистрация
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Некорректный запрос
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Конфликт (имя пользователя или email уже существует)
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+  /api/v1/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Снимает указанную сумму в указанной валюте с баланса пользователя.
+      parameters:
+      - description: Данные для снятия
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/requests.DepositResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            $ref: '#/definitions/requests.BadRequestError'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/requests.NotAuthorizedError'
+        "403":
+          description: Недостаточно средств
+          schema:
+            $ref: '#/definitions/requests.NotEnoughFundsError'
+      security:
+      - ApiKeyAuth: []
+      summary: Снятие средств с баланса пользователя
+      tags:
+      - withdraw
+schemes:
+- http
+- https
+swagger: "2.0"
